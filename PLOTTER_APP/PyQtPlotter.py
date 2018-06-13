@@ -1,6 +1,7 @@
 import sys
-from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QFormLayout,\
-    QMainWindow,QStyleFactory,QGridLayout,QComboBox,QLineEdit,QLabel,QFileDialog
+# from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QFormLayout,\
+#     QMainWindow,QStyleFactory,QGridLayout,QComboBox,QLineEdit,QLabel,QFileDialog
+from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -20,7 +21,7 @@ class CustomToolbar(NavigationToolbar):
                  t[0] in ('Home', 'Pan', 'Zoom', 'Save','Back','Forward',
                           'Subplots')]
 
-class PlotWindow(QDialog):
+class PlotWindow(QWidget):
     """
     Main app
     """
@@ -31,7 +32,7 @@ class PlotWindow(QDialog):
 
 
         #define application parameters
-        self.setGeometry(10, 10, 1000, 500)
+        self.setGeometry(10, 10, 1100, 500)
 
         self.setWindowTitle("Happy Plotter and the pyplot stone")
         # #change PyQt palette color
@@ -45,6 +46,20 @@ class PlotWindow(QDialog):
         self.setPalette(p)
         self.setStyleSheet("font: 20pt Palatino")
 
+        # Set default matplotlib style
+        Style = 'ggplot'
+
+        self.name = None
+
+        fig_var = ['style', 'Plots', 'title', 'xlabel', 'ylabel',
+                   'Xmin',
+                   'Xmax',
+                   'Ymin', 'Ymax']
+        self.data = dict.fromkeys(fig_var)
+        self.data['style'] = Style
+
+        self.data['Plots'] = {}
+
         # set the layout
         self.layout = QGridLayout()
         self.gen_right_panel()
@@ -56,42 +71,144 @@ class PlotWindow(QDialog):
         #self.toolbar =None
         # self.canvas =None
 
-        #Set default matplotlib style
-        Style = 'ggplot'
 
-        self.name = None
-
-        fig_var = ['style', 'Plots', 'title', 'xlabel', 'ylabel',
-               'Xmin',
-               'Xmax',
-               'Ymin', 'Ymax']
-        self.data = dict.fromkeys(fig_var)
-        self.data['style'] = Style
-
-        self.data['Plots'] = {}
 
     def gen_right_panel(self):
+        # Initialize tab screen
+        self.right_panel=QVBoxLayout()
+
+        self.tabs = QTabWidget()
+        self.main_tab = QWidget()
+        self.tab2 = QWidget()
+        # self.tabs.resize(200, 300)
+
+        # Add tabs
+        self.tabs.addTab(self.main_tab, "Main")
+        self.tabs.addTab(self.tab2, "Axes")
+
+        # Create first tab
+        self.tab2.layout = QFormLayout()
+        self.axes_widgets()
+        self.tab2.layout.setHorizontalSpacing(100)
+        self.tab2.layout.setVerticalSpacing(10)
+        self.tab2.setLayout(self.tab2.layout)
+
+        self.widgets()
+
+        self.gen_main_tab()
+
+        self.buttons = QWidget()
+        self.buttons.layout = QHBoxLayout()
+        self.buttons.layout.addWidget(self.OpenFile)
+        self.buttons.layout.addWidget(self.Apply)
+        self.buttons.setLayout(self.buttons.layout)
+
+
+
+        # Overall layout
+        self.right_panel.addWidget(self.tabs)
+        self.right_panel.addWidget(self.buttons)
+
         """
         Generate all widgets wanted for the right panel of the app main window
         :return:
         """
 
         #set the right side of the app containing all the buttons
-        self.right_panel = QGridLayout()
-        self.widgets()
-        self.right_panel.addWidget(self.TitleLabel,0,0)
-        self.right_panel.addWidget(self.Title,0,1)
-        self.right_panel.addWidget(self.XLab,1,0)
-        self.right_panel.addWidget(self.Xlabel,1,1)
-        self.right_panel.addWidget(self.YLab,2,0)
-        self.right_panel.addWidget(self.Ylabel,2,1)
-        self.right_panel.addWidget(self.StyleLabel,3,0)
-        self.right_panel.addWidget(self.Drop_style_menu,3,1)
-        # self.right_panel.addWidget(self.button1,4,1)
-        self.right_panel.addWidget(self.Apply,4,1)
-        self.right_panel.addWidget(self.Open,4,0)
-        self.right_panel.addWidget(self.OpenFile,5,1)
-        # self.right_panel.addWidget(self.button3,2,0)
+
+
+    def gen_main_tab(self):
+        self.main_tab.layout = QFormLayout()
+        # self.widgets()
+        self.main_tab.layout.addRow(self.TitleLabel, self.Title)
+        self.main_tab.layout.addRow(QLabel(''))
+        self.main_tab.layout.addRow(self.XLabel, self.Xlab)
+        self.main_tab.layout.addRow(QLabel(''))
+        self.main_tab.layout.addRow(self.YLabel, self.Ylab)
+        self.main_tab.layout.addRow(QLabel(''))
+        self.main_tab.layout.addRow(self.StyleLabel, self.Drop_style_menu)
+        # self.main_tab.layout.addWidget(self.Apply,4,1)
+        # self.main_tab.layout.addWidget(self.Open,4,0)
+        # self.main_tab.layout.addWidget(self.OpenFile,5,1)
+        # self.main_tab.addWidget(self.button3,2,0)
+        self.main_tab.setLayout(self.main_tab.layout)
+
+    def axes_widgets(self):
+        # BUTTONS
+        # form_name_list=['Xmin','Xmax','Ymin','Ymax']
+        #
+        # for i in form_name_list:
+        #     setattr(self,i+'Label',QLabel(i))
+        #     setattr(self,i,QLineEdit())
+        #     # getattr(self,i+'Label').setMinimumWidth(500)
+        #     self.tab2.layout.addRow(i,QLineEdit())
+        #     # self.tab2.layout.addRow(QLabel(''))
+        #     # print(getattr(self,i))
+        self.LimitsTitle= QLabel('Limits')
+        self.LimitsTitle.setStyleSheet('font : 30pt')
+        self.tab2.layout.addRow(self.LimitsTitle)
+        # Xlimits
+        self.LimX = QWidget()
+        self.LimX.layout = QHBoxLayout()
+        self.Xmin = QLineEdit(self.data['Xmin'])
+        self.XminLabel = QLabel('Xmin')
+        self.XmaxLabel = QLabel('Xmax')
+        self.Xmax = QLineEdit(self.data['Xmax'])
+        self.LimX.layout.addWidget(self.XminLabel)
+        self.LimX.layout.addWidget(self.Xmin)
+        self.LimX.layout.addWidget(self.XmaxLabel)
+        self.LimX.layout.addWidget(self.Xmax)
+        self.LimX.setLayout(self.LimX.layout)
+        self.tab2.layout.addRow(self.LimX)
+
+        # Ylimits
+        self.LimY = QWidget()
+        self.LimY.layout = QHBoxLayout()
+        self.Ymin = QLineEdit()
+        self.YminLabel = QLabel('Ymin')
+        self.YmaxLabel = QLabel('Ymax')
+        self.Ymax = QLineEdit()
+        self.LimY.layout.addWidget(self.YminLabel)
+        self.LimY.layout.addWidget(self.Ymin)
+        self.LimY.layout.addWidget(self.YmaxLabel)
+        self.LimY.layout.addWidget(self.Ymax)
+        self.LimY.setLayout(self.LimY.layout)
+        self.tab2.layout.addRow(self.LimY)
+
+        self.ScaleTitle = QLabel('Scales')
+        self.ScaleTitle.setStyleSheet('font : 30pt')
+        self.tab2.layout.addRow(self.ScaleTitle)
+
+        #log check buttons
+        self.checks = QWidget()
+        self.checks.layout = QHBoxLayout()
+        self.Xlog = QCheckBox()
+        self.XlogLabel = QLabel('X log scale')
+        self.YlogLabel = QLabel('Y log scale')
+        self.Ylog = QCheckBox()
+        self.checks.layout.addWidget(self.XlogLabel)
+        self.checks.layout.addWidget(self.Xlog)
+        self.checks.layout.addWidget(self.YlogLabel)
+        self.checks.layout.addWidget(self.Ylog)
+        self.checks.setLayout(self.checks.layout)
+        self.tab2.layout.addRow(self.checks)
+
+        self.legendTitle = QLabel('Legend')
+        self.legendTitle.setStyleSheet('font : 30pt')
+        self.tab2.layout.addRow(self.legendTitle)
+
+
+        lengendloclist= ['None','best','upper right','upper left','lower left',
+                         'lower right','right','left','center left','center right',
+                         'lower center','upper center','center']
+
+        self.legend_loc_menu = QComboBox()
+        for i in lengendloclist:
+            self.legend_loc_menu.addItem(i)
+            self.legend_loc_menu.insertSeparator(4)
+        self.tab2.layout.addRow(self.legend_loc_menu)
+
+
 
 
 
@@ -117,24 +234,25 @@ class PlotWindow(QDialog):
 
         #LABEL and LINE EDIT
         self.TitleLabel = QLabel('Title')
-        self.TitleLabel.setStyleSheet('color : white')
+        self.TitleLabel.setStyleSheet('color : black')
         self.Title = QLineEdit()
         self.Title.setMinimumWidth(200)
 
         self.StyleLabel = QLabel('Style')
-        self.StyleLabel.setStyleSheet('color : white')
+        self.StyleLabel.setStyleSheet('color : black')
 
-        self.XLab = QLabel('X Label')
-        self.XLab.setStyleSheet('color : white')
-        self.Xlabel = QLineEdit()
-        self.YLab = QLabel('Y Label')
-        self.YLab.setStyleSheet('color : white')
-        self.Ylabel = QLineEdit()
+        self.XLabel = QLabel('X Label')
+        self.XLabel.setStyleSheet('color : black')
+        self.Xlab = QLineEdit()
+        self.YLabel = QLabel('Y Label')
+        self.YLabel.setStyleSheet('color : black')
+        self.Ylab = QLineEdit()
 
         #Matplotlib Figure and Toolbar
-        self.figure = plt.figure(figsize=(100,10))
+        self.figure = plt.figure(figsize=(200,200))
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = CustomToolbar(self.canvas, self)
+        self.toolbar
 
 
 
@@ -143,6 +261,8 @@ class PlotWindow(QDialog):
         self.Drop_style_menu = QComboBox()
         for i in plt.style.available:
             self.Drop_style_menu.addItem(i)
+        self.Drop_style_menu.insertSeparator(len(plt.style.available))
+        self.Drop_style_menu.addItem('black_and_white.mplstyle')
         # self.Drop_style_menu.activated[str].connect(self.bckgrd)
 
 
@@ -151,13 +271,15 @@ class PlotWindow(QDialog):
         set the left side of the app containing the plotting area
         """
 
-        self.left_panel = QGridLayout()
-        self.left_panel.addWidget(self.canvas, 0, 0)
+        self.left_panel = QVBoxLayout()
+        self.left_panel.addWidget(self.canvas)
         # self.toolbar = NavigationToolbar(self.canvas, self)
         # print(NavigationToolbar.toolitems)
         # self.left_panel.addWidget(self.toolbar, 1, 0)
 
-        self.left_panel.addWidget(self.toolbar, 1, 0)
+
+
+        self.left_panel.addWidget(self.toolbar)
 
     def new_plot(self,name=None):
         ''' plot some random stuff '''
@@ -219,6 +341,7 @@ class PlotWindow(QDialog):
 
     def refresh(self):
         """Refresh plot parameters"""
+        print('refresh')
         if self.figure.get_axes():
             print('refresh')
             self.update_data_dict()
@@ -239,6 +362,8 @@ class PlotWindow(QDialog):
         #         self.ax.legend_.remove()
         # else:
         #     pass
+
+
         self.figure.clear()
         plt.style.use(self.data['style'])
 
@@ -247,8 +372,8 @@ class PlotWindow(QDialog):
         self.ax.set_title(self.data['title'])
         self.ax.set_xlabel(self.data['xlabel'])
         self.ax.set_ylabel(self.data['ylabel'])
-        # self.ax.set_xlim(self.data['Xmin'], self.data['Xmax'])
-        # self.ax.set_ylim(self.data['Ymin'], self.data['Ymax'])
+
+
 
         for key in self.data['Plots']:
 
@@ -274,19 +399,29 @@ class PlotWindow(QDialog):
                              markevery=markev)
 
 
+        if self.data['Xmin'] and self.data['Xmax']:
+            self.ax.set_xlim(self.data['Xmin'], self.data['Xmax'])
+        else:
+            xlimits = self.ax.get_xlim()
+            print(xlimits[0])
+            self.data['Xmin'],self.data['Xmax'] = xlimits[0],xlimits[1]
+            # self.ax.set_ylim(self.data['Ymin'], self.data['Ymax'])
+
+
     def update_data_dict(self):
         print('updata dict')
 
         self.data['style'] = str(self.Drop_style_menu.currentText())
 
         self.data['title'] = self.Title.text()
-        self.data['xlabel'] = self.Xlabel.text()
-        self.data['ylabel'] = self.Ylabel.text()
+        self.data['xlabel'] = self.Xlab.text()
+        self.data['ylabel'] = self.Ylab.text()
 
-        # self.data['Xmin'] = Xlim[0]
-        # self.data['Xmax'] = Xlim[1]
-        # self.data['Ymin'] = Ylim[0]
-        # self.data['Ymax'] = Ylim[1]
+        # self.data['Xmin'] = self.Xmin.text()
+        print(self.data['Xmin'])
+        # self.data['Xmax'] = self.Xmax.text()
+        self.data['Ymin'] = self.Ymin.text()
+        self.data['Ymax'] = self.Ymax.text()
 
     def getfile(self):
         print('getfile')
@@ -335,26 +470,71 @@ class ParamWindow(QDialog):
         self.setWindowModality(Qt.ApplicationModal)
 
         p = self.palette()
-        p.setColor(self.backgroundRole(),Qt.darkGray)
+        p.setColor(self.backgroundRole(),Qt.white)
         self.setPalette(p)
         self.setStyleSheet("font: 20pt Palatino")
 
         # set the layout
-        self.layout = QFormLayout()
-        self.widgets()
-        self.layout.setHorizontalSpacing(200)
-        self.layout.setVerticalSpacing(20)
+        # self.layout = QFormLayout()
+        # self.widgets()
+        # self.layout.setHorizontalSpacing(200)
+        # self.layout.setVerticalSpacing(20)
+        # self.setLayout(self.layout)
+
+        self.layout = QVBoxLayout(self)
+
+
+
+
+
+        # Initialize tab screen
+        self.tabs = QTabWidget()
+        self.tab1 = QWidget()
+        self.tab2 = QWidget()
+        self.tabs.resize(300, 200)
+
+        # Add tabs
+        self.tabs.addTab(self.tab1, "Curves")
+        self.tabs.addTab(self.tab2, "Axes")
+
+        # Create first tab
+        self.tab1.layout = QFormLayout()
+        self.axes_widgets()
+        self.tab1.layout.setHorizontalSpacing(100)
+        self.tab1.layout.setVerticalSpacing(10)
+        self.tab1.setLayout(self.tab1.layout)
+
+        #Bottom buttons
+        self.buttons = QWidget()
+        self.buttons.layout= QHBoxLayout()
+        self.apply = QPushButton("Apply")
+        self.apply.clicked.connect(PlotWindow.refresh)
+        self.space=QLabel('')
+        self.space.setMinimumWidth(100)
+        self.okay = QPushButton("OK")
+        self.cancel = QPushButton("Cancel")
+
+        self.buttons.layout.addWidget(self.apply)
+        self.buttons.layout.addWidget(self.space)
+        self.buttons.layout.addWidget(self.okay)
+        self.buttons.layout.addWidget(self.cancel)
+        self.buttons.setLayout(self.buttons.layout)
+
+        # Overall layout
+        self.layout.addWidget(self.tabs)
+        self.layout.addWidget(self.buttons)
         self.setLayout(self.layout)
 
-    def widgets(self):
+    def axes_widgets(self):
         # BUTTONS
         form_name_list=['Xmin','Xmax','Ymin','Ymax']
 
         for i in form_name_list:
             setattr(self,i+'Label',QLabel(i))
             setattr(self,i,QLineEdit())
-            getattr(self,i+'Label').setMinimumWidth(500)
-            self.layout.addRow(QLabel(i),QLineEdit())
+            # getattr(self,i+'Label').setMinimumWidth(500)
+            self.tab1.layout.addRow(i,QLineEdit())
+            self.tab1.layout.addRow(QLabel(''))
             print(getattr(self,i))
 
             # self.XlimLabel = QLabel('Xlimits')
